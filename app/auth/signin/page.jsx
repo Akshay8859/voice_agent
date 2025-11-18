@@ -36,12 +36,35 @@
 import Image from "next/image";
 import { supabase } from "@/services/supabaseClient";
 import { Button } from "@/components/ui/button";
+import { useState } from "react";
 
 const Login = () => {
+  const [email,setEmail]=useState("")
+  const [password,setPassword]=useState("")
+
   const signInWithProvider = async (provider) => {
     const { error } = await supabase.auth.signInWithOAuth({ provider });
     if (error) console.log("Error signing in:", error.message);
   };
+  const signInFunction = async() => {
+    
+      //check if new user exists
+      let { data: Users, error } = await supabase.from('Users').select("*").eq('email', email).eq('password', password);
+      console.log(Users)
+
+      if (Users?.length == 0) {
+        console.log("No user found, please sign up first.");
+        return;
+      }
+      else{
+       alert("login successful");
+        console.log(Users);
+        //setUser(Users);
+        return;
+      }
+      //setUser(Users);
+    
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-200 px-4">
@@ -96,17 +119,21 @@ const Login = () => {
         <div className="space-y-4">
           <input
             type="email"
+            value={email}
+            onChange={(e)=>setEmail(e.target.value)}
             placeholder="Enter your email"
             className="w-full border rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
 
           <input
             type="password"
+            value={password}
+            onChange={(e)=>setPassword(e.target.value)}
             placeholder="Enter your password"
             className="w-full border rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
 
-          <Button className="w-full bg-indigo-600 hover:bg-indigo-700">
+          <Button onClick={() => signInFunction()} className="w-full bg-indigo-600 hover:bg-indigo-700">
             Sign In
           </Button>
         </div>

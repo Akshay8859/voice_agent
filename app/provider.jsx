@@ -22,7 +22,7 @@ function Provider({children}){
                 {
                     name:user?.user_metadata?.name || "New User",
                     email:user?.email,
-                    picture:user?.user_metadata?.picture || "https://www.gravatar.com/avatar"
+                    picture:user?.user_metadata?.picture || "https://www.gravatar.com/avatar",
                 }
                ]);
                console.log(data);  

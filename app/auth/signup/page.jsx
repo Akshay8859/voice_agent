@@ -14,7 +14,28 @@ const Signup = () => {
     const email = e.target.email.value;
     const password = e.target.password.value;
 
-    const { error } = await supabase.auth.signUp({ email, password });
+    //const { error } = await supabase.auth.signUp({ email, password });
+
+    let { data: Users, error } = await supabase.from('Users').select("*").eq('email', email);
+          console.log(Users)
+    
+          if (Users?.length == 0) {
+            const { data, error } = await supabase.from('Users')
+              .insert([
+                {
+                  name: "New User",
+                  email: email,
+                  picture:  "https://www.gravatar.com/avatar",
+                  password: password
+                }
+              ]);
+            console.log(data);
+            //setUser(data);
+            
+          }
+          setLoading(false);
+          //setUser(Users);
+        
 
     if (error) {
       alert(error.message);
