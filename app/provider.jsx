@@ -25,11 +25,11 @@ function Provider({children}){
                     picture:user?.user_metadata?.picture || "https://www.gravatar.com/avatar"
                 }
                ]);
-               console.log(data);
+               console.log(data);  
                setUser(data);
                return ;
            }
-           setUser(Users[0]);
+           setUser(Users);
         })
         
 
