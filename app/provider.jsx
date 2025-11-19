@@ -15,7 +15,7 @@ function Provider({children}){
             //check if new user exists
             let {data:Users,error}=await supabase.from('Users').select("*").eq('email',user?.email);
             console.log(Users)
-
+  
            if(Users?.length==0){
                const { data, error } =await supabase.from('Users')
                .insert([
@@ -29,7 +29,7 @@ function Provider({children}){
                setUser(data);
                return ;
            }
-           setUser(Users);
+           setUser(Users[0]);
         })
         
 

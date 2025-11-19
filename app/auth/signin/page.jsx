@@ -92,7 +92,7 @@ const Login = () => {
 
           <Button
             onClick={() => signInWithProvider("google")}
-            className="w-full flex items-center justify-center gap-2 bg-white text-gray-700 border hover:bg-gray-50"
+            className="w-full flex items-center justify-center gap-2 bg-white text-gray-700 border hover:bg-gray-50 cursor-pointer"
             variant="outline"
           >
             <Image src="/google.svg" alt="google" width={20} height={20} />
@@ -101,7 +101,7 @@ const Login = () => {
 
           <Button
             onClick={() => signInWithProvider("github")}
-            className="w-full flex items-center justify-center gap-2 bg-black text-white hover:bg-gray-900"
+            className="w-full flex items-center justify-center gap-2 bg-black text-white hover:bg-gray-900 cursor-pointer"
           >
             <Image src="/github.svg" alt="github" width={20} height={20} />
             Continue with GitHub
@@ -133,7 +133,7 @@ const Login = () => {
             className="w-full border rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
 
-          <Button onClick={() => signInFunction()} className="w-full bg-indigo-600 hover:bg-indigo-700">
+          <Button className="w-full bg-indigo-600 hover:bg-indigo-700">
             Sign In
           </Button>
         </div>

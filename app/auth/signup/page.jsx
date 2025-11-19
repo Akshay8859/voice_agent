@@ -75,7 +75,7 @@ const Signup = () => {
         <div className="mt-6 space-y-3">
           <Button
             onClick={() => signInWithProvider("google")}
-            className="w-full flex items-center justify-center gap-2 bg-white text-gray-700 border hover:bg-gray-50"
+            className="w-full flex items-center justify-center gap-2 bg-white text-gray-700 border hover:bg-gray-50 cursor-pointer"
             variant="outline"
           >
             <Image src="/google.svg" alt="google" width={20} height={20} />
@@ -84,7 +84,7 @@ const Signup = () => {
 
           <Button
             onClick={() => signInWithProvider("github")}
-            className="w-full flex items-center justify-center gap-2 bg-black text-white hover:bg-gray-900"
+            className="w-full flex items-center justify-center gap-2 bg-black text-white hover:bg-gray-900 cursor-pointer"
           >
             <Image src="/github.svg" alt="github" width={20} height={20} />
             Continue with GitHub
@@ -118,7 +118,7 @@ const Signup = () => {
 
           <Button
             type="submit"
-            className="w-full bg-indigo-600 hover:bg-indigo-700"
+            className="w-full bg-indigo-600 hover:bg-indigo-700 cursor-pointer"
             disabled={loading}
           >
             {loading ? "Creating Account..." : "Sign Up"}
