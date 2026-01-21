@@ -33,15 +33,16 @@ const Signup = () => {
             //setUser(data);
             
           }
+          else {
+            alert("Account already exists.");
+          }
           setLoading(false);
           //setUser(Users);
         
 
     if (error) {
       alert(error.message);
-    } else {
-      alert("Account created. Check your email to verify.");
-    }
+    } 
 
     setLoading(false);
   };
@@ -79,7 +80,7 @@ const Signup = () => {
             variant="outline"
           >
             <Image src="/google.svg" alt="google" width={20} height={20} />
-            Continue with Google
+            Sign up with Google
           </Button>
 
           <Button
@@ -87,7 +88,7 @@ const Signup = () => {
             className="w-full flex items-center justify-center gap-2 bg-black text-white hover:bg-gray-900 cursor-pointer"
           >
             <Image src="/github.svg" alt="github" width={20} height={20} />
-            Continue with GitHub
+            Sign up with GitHub
           </Button>
         </div>
 
@@ -118,7 +119,7 @@ const Signup = () => {
 
           <Button
             type="submit"
-            className="w-full bg-indigo-600 hover:bg-indigo-700 cursor-pointer"
+            className="w-full bg-primary cursor-pointer"
             disabled={loading}
           >
             {loading ? "Creating Account..." : "Sign Up"}

@@ -21,7 +21,7 @@ export function AppSidebar () {
         <Sidebar>
             <SidebarHeader className='flex items-center'>
                 <Image src={'/logo.png'} alt='logo' width={200} height={100} className='w-[150px]'/>
-                <Button className='w-full mt-5'>Create New Interview</Button>
+                <Button className='w-full mt-5 cursor-pointer'>+ Create New Interview</Button>
             </SidebarHeader>
             <SidebarContent>
                 <SidebarGroup>

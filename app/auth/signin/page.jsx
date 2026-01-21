@@ -57,6 +57,7 @@ const Login = () => {
         return;
       }
       else{
+
        alert("login successful");
         console.log(Users);
         //setUser(Users);
@@ -133,7 +134,7 @@ const Login = () => {
             className="w-full border rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
 
-          <Button className="w-full bg-indigo-600 hover:bg-indigo-700">
+          <Button onClick={() => signInFunction()} className="w-full bg-primary cursor-pointer">
             Sign In
           </Button>
         </div>
