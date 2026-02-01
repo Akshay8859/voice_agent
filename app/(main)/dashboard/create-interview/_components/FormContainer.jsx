@@ -29,7 +29,6 @@ const FormContainer = ({onHandleInputChange, GoToNext}) => {
       setInterviewType(filteredTypes);
     }
   }
-  console.log("Gemini key:", process.env.GEMINI_API_KEY);
   return (
     <div className='p-5 bg-gray-100 rounded-xl'>
       <div>

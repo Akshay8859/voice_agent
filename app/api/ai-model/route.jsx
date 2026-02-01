@@ -46,7 +46,7 @@
 export const runtime = "nodejs";
 
 import { NextResponse } from "next/server";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI } from "@google/genai";
 import { QUESTION_PROMPT } from "@/services/Constants";
 
 export async function POST(req) {
@@ -59,15 +59,18 @@ export async function POST(req) {
       .replace('{{duration}}', duration)
       .replace('{{type}}', type);
 
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    const genAI = new GoogleGenAI(process.env.GEMINI_API_KEY);
     
-    const model = genAI.getGenerativeModel({
-      model: "gemini-1.5-flash",
+    // const model = genAI.getGenerativeModel({
+    //   model: "gemini-3-pro-preview",
+    // });
+
+    // const result = await model.generateContent(FINAL_PROMPT);
+    const response = await genAI.models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents: FINAL_PROMPT, 
     });
-
-    const result = await model.generateContent(FINAL_PROMPT);
-
-    const text = result?.response?.text?.();
+    const text = response?.text;
     if (!text) {
       throw new Error("No text returned from Gemini");
     }

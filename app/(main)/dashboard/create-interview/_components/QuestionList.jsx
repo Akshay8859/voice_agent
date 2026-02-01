@@ -59,14 +59,21 @@
 // export default QuestionList
 
 
+import { useUserDetail } from '@/app/provider';
+import { Button } from '@/components/ui/button';
+import { supabase } from '@/services/supabaseClient';
 import axios from 'axios';
-import { Loader2Icon } from 'lucide-react';
+import { Loader2, Loader2Icon } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { v4 as uuidv4 } from 'uuid';
+import QuestionListCotainer from './QuestionListCotainer';
 
-const QuestionList = ({ formData }) => {
+const QuestionList = ({ formData , onCreateLink}) => {
   const [loading, setLoading] = useState(true);
   const [questionList, setQuestionList] = useState([]);
+  const {user} = useUserDetail();
+  const [saveLoading, setSaveLoading] = useState(false);
 
   useEffect(() => {
     if (formData) {
@@ -101,7 +108,24 @@ const QuestionList = ({ formData }) => {
       setLoading(false);
     }
   };
-
+  const onFinish = async () => {
+    setSaveLoading(true);
+    const interview_id = uuidv4();
+    const {data, error} = await supabase
+      .from('interviews')
+      .insert([
+        {
+          ...formData,
+          questionList:questionList,
+          userEmail: user?.email,
+          interview_id: interview_id,
+        }
+      ])
+      .select();
+    setSaveLoading(false);
+    
+    onCreateLink(interview_id);
+  }
   return (
     <div>
       {loading && (
@@ -117,15 +141,17 @@ const QuestionList = ({ formData }) => {
       )}
 
       {questionList.length > 0 && (
-        <div className="p-5 border border-gray-300 rounded-xl space-y-3">
-          {questionList.map((item, index) => (
-            <div key={index} className="p-3 border border-gray-200 rounded-xl">
-              <h2 className="font-medium">{item.question}</h2>
-              <p>Type: {item.type}</p>
-            </div>
-          ))}
+        <div>
+          <QuestionListCotainer questionList={questionList} />
         </div>
       )}
+
+      <div className='flex justify-end mt-10'>
+        <Button onClick={() => onFinish()} disabled={saveLoading}>
+          {saveLoading && <Loader2 className="animate-spin" />}
+          Create Interview Link
+        </Button>
+      </div>
     </div>
   );
 };
