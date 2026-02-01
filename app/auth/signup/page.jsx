@@ -119,7 +119,11 @@ const Signup = () => {
 
           <Button
             type="submit"
+<<<<<<< Updated upstream
             className="w-full bg-primary cursor-pointer"
+=======
+            className="w-full bg-indigo-600 hover:bg-indigo-700 cursor-pointer"
+>>>>>>> Stashed changes
             disabled={loading}
           >
             {loading ? "Creating Account..." : "Sign Up"}

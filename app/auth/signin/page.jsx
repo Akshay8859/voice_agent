@@ -134,7 +134,11 @@ const Login = () => {
             className="w-full border rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
 
+<<<<<<< Updated upstream
           <Button onClick={() => signInFunction()} className="w-full bg-primary cursor-pointer">
+=======
+          <Button className="w-full cursor-pointer">
+>>>>>>> Stashed changes
             Sign In
           </Button>
         </div>

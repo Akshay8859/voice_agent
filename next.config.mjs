@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     images: {
+<<<<<<< Updated upstream
         remotePatterns: [
             {
                 protocol: 'https',
@@ -8,6 +9,10 @@ const nextConfig = {
             }
         ]
     },
+=======
+        domains: ['lh3.googleusercontent.com']
+    }
+>>>>>>> Stashed changes
 };
 
 export default nextConfig;

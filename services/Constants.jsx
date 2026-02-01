@@ -1,4 +1,8 @@
+<<<<<<< Updated upstream
 import { BriefcaseBusinessIcon, Calendar, Code2Icon, Component, icons, LayoutDashboard, List, Puzzle, Settings, User, User2Icon, WalletCards } from "lucide-react";
+=======
+import { Calendar, icons, LayoutDashboard, List, Settings, WalletCards } from "lucide-react";
+>>>>>>> Stashed changes
 
 export const SideBarOptions = [
     {
@@ -27,6 +31,7 @@ export const SideBarOptions = [
         path: '/settings'
     },
 
+<<<<<<< Updated upstream
 ]
 
 export const InterviewType = [
@@ -85,3 +90,6 @@ format: interviewQuestions=[
 
 🎯 The goal is to create a structured, relevant, and time-optimized interview plan for a {{jobTitle}} role.`
 
+=======
+]
+>>>>>>> Stashed changes
