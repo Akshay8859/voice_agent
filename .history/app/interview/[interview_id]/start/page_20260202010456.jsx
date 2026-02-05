@@ -128,6 +128,9 @@ const StartInterview = () => {
         return () => {
             vapiRef.current.off("message", handleMessage);
             vapiRef.current.off("call-start");
+            vapiRef.current.off("speech-start");
+            vapiRef.current.off("speech-end");
+            vapiRef.current.off("call-end");
         }
     },[]);
 
