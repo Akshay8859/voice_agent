@@ -192,7 +192,7 @@ const StartInterview = () => {
             <div className='bg-gray-100 h-[400px] rounded-lg border flex flex-col gap-3 items-center justify-center'>
                 <div className='relative items-center justify-center flex flex-col'>
                     {activeUser == 2 && <span className='absolute inset-0 rounded-full bg-primary opacity-75 animate-ping' />}
-                    <h2 className='text-2xl bg-primary h-[60px] w-[60px] text-white p-3 rounded-full px-6 '>{interviewInfo?.userName[0]}</h2>
+                    <h2 className='text-2xl bg-primary h-[60px] w-[60px] text-white p-3 rounded-full px-6'>{interviewInfo?.userName[0]}</h2>
                 </div>
                 <h2>{interviewInfo?.userName}</h2>
             </div>
