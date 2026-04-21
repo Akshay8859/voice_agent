@@ -4,7 +4,7 @@ import Image from "next/image";
 
 const InterviewCompleted = () => {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-start bg-grey- px-4 py-12">
+    <div className="min-h-screen flex flex-col items-center justify-start bg-grey-600 px-4 py-12">
       
       <div className="flex flex-col items-center">
         <div className="bg-green-500 rounded-full p-4">
