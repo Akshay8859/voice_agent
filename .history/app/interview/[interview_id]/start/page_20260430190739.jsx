@@ -1,17 +1,17 @@
 "use client"
 import { InterviewDataContext } from '@/context/InterviewDataContext';
 import Vapi from '@vapi-ai/web';
-import { CircleDot, Clock, Clock10, Loader2Icon, Mic, MicOff, Phone, Timer, Video, VideoOff, ShieldCheck } from 'lucide-react';
+import { CircleDot, Clock, Clock10, Loader2Icon, Mic, MicOff, Phone, Timer, Video, VideoOff } from 'lucide-react';
 import SpeakingIcon from '@/components/ui/speaking-icon';
 import Image from 'next/image';
 import React, { useContext, useEffect, useRef, useState } from 'react'
+import AlertConfirmation from './_components/AlertConfirmation';
 import TimerComponent from './_components/TimerComponent';
 import { toast } from 'sonner';
 import axios from 'axios';
 import { supabase } from '@/services/supabaseClient';
 import { useParams, useRouter } from 'next/navigation';
 import QuestionOverlayPanel from './_components/QuestionOverlayPanel';
-import { useInterviewProctoring } from '@/hooks/useInterviewProctoring';
 
 
 
@@ -33,11 +33,6 @@ const StartInterview = () => {
   const mediaRecorderRef = useRef(null);
   const recordedChunksRef = useRef([]);
   const hasUploadedRef = useRef(false);
-  const proctoringActive = Boolean(timerStart && !mediaError);
-    const { canvasRef, logRef, status: proctoringStatus, displayCounts, resetLog } = useInterviewProctoring({
-        videoRef,
-        active: proctoringActive,
-    });
   
 
   if (!vapiRef.current) {
@@ -248,7 +243,6 @@ const StartInterview = () => {
         vapiRef.current.on("call-start",()=>{
             hasUploadedRef.current = false;
             conversationRef.current = [];
-            resetLog();
             setTimerStart(true);
             toast("Call Connected..");
         })
@@ -286,7 +280,7 @@ const StartInterview = () => {
             // vapiRef.current.off("speech-end", ()=>console.log("END"));
             // vapiRef.current.off("call-end", ()=>console.log("END"));
         }
-    },[resetLog]);
+    },[]);
 
     const GenerateFeedback = async () => {
         setLoading(true);
@@ -316,26 +310,11 @@ const StartInterview = () => {
         // const parsed = firstJsonMatch ? JSON.parse(firstJsonMatch[0]) : null;
 
         const parsed = JSON.parse(cleaned);  
-        const proctoringSummary = {
-            noFaceCount: logRef.current.noFaceCount,
-            multipleFaceCount: logRef.current.multipleFaceCount,
-            cellPhoneCount: logRef.current.cellPhoneCount,
-            prohibitedObjectCount: logRef.current.prohibitedObjectCount,
-            screenshots: (logRef.current.screenshots || []).map((s) => ({
-                url: s.url,
-                type: s.type,
-                detectedAt: s.detectedAt,
-            })),
-        };
-        const feedbackWithProctoring =
-            parsed && typeof parsed === "object"
-                ? { ...parsed, proctoring: proctoringSummary }
-                : { raw: parsed, proctoring: proctoringSummary };
 
         const {data, error} = await supabase
             .from('interview-feedback')
             .insert([
-                { userName: interviewInfo?.userName, userEmail: interviewInfo?.userEmail, interview_id: interview_id, feedback: feedbackWithProctoring, recommended: false }
+                { userName: interviewInfo?.userName, userEmail: interviewInfo?.userEmail, interview_id: interview_id, feedback: parsed, recommended: false }
             ])
             .select();
 
@@ -448,78 +427,12 @@ const StartInterview = () => {
               <span className="font-semibold">Interview Time Left</span>
               {/* <span className="font-mono text-lg">05:13</span> */}
                 <TimerComponent start={timerStart} interviewDuration={interviewInfo?.duration} />
-
-            {/* Main call area */}
-            <div className="flex-1 flex items-center justify-center relative">
-                <div className="flex flex-col items-center justify-center w-full h-full">
-                    <div className="relative flex flex-col items-center justify-center">
-                        <span className="absolute w-48 h-48 rounded-full bg-blue-700 opacity-30 animate-ping" />
-                        <span className="absolute w-32 h-32 rounded-full bg-blue-700 opacity-40 animate-pulse" />
-                        <Image src={'/ai.png'} alt='ai' width={100} height={100} className='w-[80px] h-[80px] rounded-full object-cover z-10'/>
-                    </div>
-                    <h2 className="text-white text-lg mt-4">AI Recruiter</h2>
-                </div>
-
-                <div className="fixed bottom-8 right-8 w-64 rounded-lg overflow-hidden border-2 border-gray-700 bg-black shadow-lg z-20 flex flex-col">
-                    <div className="relative w-full h-40 bg-black">
-                        <video
-                            ref={videoRef}
-                            autoPlay
-                            playsInline
-                            muted
-                            className="w-full h-full object-cover"
-                        />
-                        <canvas
-                            ref={canvasRef}
-                            className="absolute inset-0 w-full h-full pointer-events-none"
-                            aria-hidden
-                        />
-                        <div className="absolute top-1 left-1 right-1 flex items-start justify-between gap-1 pointer-events-none">
-                            <span
-                                className={`text-[10px] font-medium px-1.5 py-0.5 rounded flex items-center gap-0.5 ${
-                                    proctoringActive && !proctoringStatus.error
-                                        ? "bg-emerald-600/90 text-white"
-                                        : "bg-gray-800/90 text-gray-300"
-                                }`}
-                            >
-                                <ShieldCheck className="h-3 w-3 shrink-0" />
-                                {proctoringStatus.loading
-                                    ? "Proctoring…"
-                                    : proctoringStatus.error
-                                      ? "Proctoring off"
-                                      : proctoringActive
-                                        ? "Live"
-                                        : "Ready"}
-                            </span>
-                        </div>
-                    </div>
-                    {(displayCounts.noFaceCount +
-                        displayCounts.multipleFaceCount +
-                        displayCounts.cellPhoneCount +
-                        displayCounts.prohibitedObjectCount) > 0 && (
-                        <div className="text-[10px] text-gray-300 px-2 py-1 bg-gray-900/95 border-t border-gray-800 grid grid-cols-2 gap-x-2 gap-y-0.5">
-                            {displayCounts.noFaceCount > 0 && (
-                                <span>No face: {displayCounts.noFaceCount}</span>
-                            )}
-                            {displayCounts.multipleFaceCount > 0 && (
-                                <span>Multi-face: {displayCounts.multipleFaceCount}</span>
-                            )}
-                            {displayCounts.cellPhoneCount > 0 && (
-                                <span>Phone: {displayCounts.cellPhoneCount}</span>
-                            )}
-                            {displayCounts.prohibitedObjectCount > 0 && (
-                                <span>Object: {displayCounts.prohibitedObjectCount}</span>
-                            )}
-                        </div>
-                    )}
-              </div>
-              {mediaError && <div className="fixed bottom-56 right-8 text-red-500 text-sm bg-white bg-opacity-80 px-3 py-2 rounded shadow">{mediaError}</div>}
             </div>
           </div>
 
           {/* Main Content */}
-          {/* <div className="flex gap-6 px-8 pb-8 pt-2">
-            Video Section
+          <div className="flex gap-6 px-8 pb-8 pt-2">
+            {/* Video Section */}
             <div className="flex-1 flex flex-col items-center">
               <div className="relative w-full aspect-video bg-black rounded-xl overflow-hidden flex items-center justify-center">
                 <video
@@ -529,22 +442,22 @@ const StartInterview = () => {
                   muted
                   className="w-full h-full object-cover"
                 />
-                Mic status
+                {/* Mic status */}
                 <div className="absolute bottom-4 left-4 flex items-center gap-2">
                   
                         {activeUser === 2 && <SpeakingIcon size={24} color="#A3D86E" />}
 
                 </div>
-                Rec status
+                {/* Rec status */}
                 <div className="absolute top-4 right-4 flex items-center gap-2">
                   <span className="px-2 py-1 bg-red-100 text-red-600 rounded text-xs font-semibold">Rec</span>
                 </div>
-                User name overlay
+                {/* User name overlay */}
                 <div className="absolute top-4 left-4 bg-white/80 px-3 py-1 rounded text-gray-700 text-xs font-medium shadow">
                   {interviewInfo?.userName} (You)
                 </div>
               </div>
-              Video Controls
+              {/* Video Controls */}
               <div className="flex items-center justify-center gap-6 mt-6">
                 <button
                   className={`h-12 w-12 flex items-center justify-center rounded-full ${micEnabled ? 'bg-gray-100' : 'bg-red-100'} text-gray-700 hover:bg-gray-200 transition`}
@@ -569,18 +482,18 @@ const StartInterview = () => {
                 )}
               </div>
             </div>
-            Question Panel
+            {/* Question Panel */}
             <div className="w-[340px] flex flex-col gap-4">
               <QuestionOverlayPanel interviewInfo={interviewInfo} />
               <div className="bg-white rounded-xl p-5 shadow flex flex-col items-center gap-2">
                 <span className="font-semibold text-gray-700">
                   {activeUser === 2 ? 'AI Interviewer' : activeUser === 1 ? `${interviewInfo?.userName} (You)` : 'AI Interviewer'}
                 </span>
-                <div className='flex bottom-3 left-3'>
-                  {activeUser === 1 && <SpeakingIcon size={25} color="#A3D86E" />}
-                </div>
                 <div className="grid grid-cols-1 items-center mt-2">
                   
+                  <div className='flex bottom-3 left-3'>
+                    {activeUser === 1 && <SpeakingIcon size={25} color="#A3D86E" />}
+                  </div>
                   <Image src={'/ai.png'} alt='ai' width={100} height={100} className='w-[80px] h-[80px] rounded-full object-cover z-10'/>
                   <span className="text-green-700 font-medium">
                     {activeUser === 1 && 'AI is speaking...'}
@@ -590,11 +503,10 @@ const StartInterview = () => {
                 </div>
               </div>
             </div>
-          </div> */}
+          </div>
         </div>
       </div>
     </div>
-   </div>
 
 
 

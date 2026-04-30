@@ -450,7 +450,7 @@ const StartInterview = () => {
                 <TimerComponent start={timerStart} interviewDuration={interviewInfo?.duration} />
 
             {/* Main call area */}
-            <div className="flex-1 flex items-center justify-center relative">
+            {/* <div className="flex-1 flex items-center justify-center relative">
                 <div className="flex flex-col items-center justify-center w-full h-full">
                     <div className="relative flex flex-col items-center justify-center">
                         <span className="absolute w-48 h-48 rounded-full bg-blue-700 opacity-30 animate-ping" />
@@ -513,7 +513,7 @@ const StartInterview = () => {
                         </div>
                     )}
               </div>
-              {mediaError && <div className="fixed bottom-56 right-8 text-red-500 text-sm bg-white bg-opacity-80 px-3 py-2 rounded shadow">{mediaError}</div>}
+              {mediaError && <div className="fixed bottom-56 right-8 text-red-500 text-sm bg-white bg-opacity-80 px-3 py-2 rounded shadow">{mediaError}</div>} */}
             </div>
           </div>
 
@@ -594,7 +594,7 @@ const StartInterview = () => {
         </div>
       </div>
     </div>
-   </div>
+    // </div>
 
 
 

@@ -594,7 +594,7 @@ const StartInterview = () => {
         </div>
       </div>
     </div>
-   </div>
+    // </div>
 
 
 

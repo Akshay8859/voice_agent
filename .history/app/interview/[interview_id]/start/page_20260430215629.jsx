@@ -450,7 +450,7 @@ const StartInterview = () => {
                 <TimerComponent start={timerStart} interviewDuration={interviewInfo?.duration} />
 
             {/* Main call area */}
-            <div className="flex-1 flex items-center justify-center relative">
+            {/* <div className="flex-1 flex items-center justify-center relative">
                 <div className="flex flex-col items-center justify-center w-full h-full">
                     <div className="relative flex flex-col items-center justify-center">
                         <span className="absolute w-48 h-48 rounded-full bg-blue-700 opacity-30 animate-ping" />
@@ -513,13 +513,13 @@ const StartInterview = () => {
                         </div>
                     )}
               </div>
-              {mediaError && <div className="fixed bottom-56 right-8 text-red-500 text-sm bg-white bg-opacity-80 px-3 py-2 rounded shadow">{mediaError}</div>}
+              {mediaError && <div className="fixed bottom-56 right-8 text-red-500 text-sm bg-white bg-opacity-80 px-3 py-2 rounded shadow">{mediaError}</div>} */}
             </div>
           </div>
 
           {/* Main Content */}
-          {/* <div className="flex gap-6 px-8 pb-8 pt-2">
-            Video Section
+          <div className="flex gap-6 px-8 pb-8 pt-2">
+            {/* Video Section */}
             <div className="flex-1 flex flex-col items-center">
               <div className="relative w-full aspect-video bg-black rounded-xl overflow-hidden flex items-center justify-center">
                 <video
@@ -529,22 +529,22 @@ const StartInterview = () => {
                   muted
                   className="w-full h-full object-cover"
                 />
-                Mic status
+                {/* Mic status */}
                 <div className="absolute bottom-4 left-4 flex items-center gap-2">
                   
                         {activeUser === 2 && <SpeakingIcon size={24} color="#A3D86E" />}
 
                 </div>
-                Rec status
+                {/* Rec status */}
                 <div className="absolute top-4 right-4 flex items-center gap-2">
                   <span className="px-2 py-1 bg-red-100 text-red-600 rounded text-xs font-semibold">Rec</span>
                 </div>
-                User name overlay
+                {/* User name overlay */}
                 <div className="absolute top-4 left-4 bg-white/80 px-3 py-1 rounded text-gray-700 text-xs font-medium shadow">
                   {interviewInfo?.userName} (You)
                 </div>
               </div>
-              Video Controls
+              {/* Video Controls */}
               <div className="flex items-center justify-center gap-6 mt-6">
                 <button
                   className={`h-12 w-12 flex items-center justify-center rounded-full ${micEnabled ? 'bg-gray-100' : 'bg-red-100'} text-gray-700 hover:bg-gray-200 transition`}
@@ -569,18 +569,18 @@ const StartInterview = () => {
                 )}
               </div>
             </div>
-            Question Panel
+            {/* Question Panel */}
             <div className="w-[340px] flex flex-col gap-4">
               <QuestionOverlayPanel interviewInfo={interviewInfo} />
               <div className="bg-white rounded-xl p-5 shadow flex flex-col items-center gap-2">
                 <span className="font-semibold text-gray-700">
                   {activeUser === 2 ? 'AI Interviewer' : activeUser === 1 ? `${interviewInfo?.userName} (You)` : 'AI Interviewer'}
                 </span>
-                <div className='flex bottom-3 left-3'>
-                  {activeUser === 1 && <SpeakingIcon size={25} color="#A3D86E" />}
-                </div>
                 <div className="grid grid-cols-1 items-center mt-2">
                   
+                  <div className='flex bottom-3 left-3'>
+                    {activeUser === 1 && <SpeakingIcon size={25} color="#A3D86E" />}
+                  </div>
                   <Image src={'/ai.png'} alt='ai' width={100} height={100} className='w-[80px] h-[80px] rounded-full object-cover z-10'/>
                   <span className="text-green-700 font-medium">
                     {activeUser === 1 && 'AI is speaking...'}
@@ -590,11 +590,11 @@ const StartInterview = () => {
                 </div>
               </div>
             </div>
-          </div> */}
+          </div>
         </div>
       </div>
     </div>
-   </div>
+    // </div>
 
 
 

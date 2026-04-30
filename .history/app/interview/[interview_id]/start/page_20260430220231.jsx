@@ -450,7 +450,7 @@ const StartInterview = () => {
                 <TimerComponent start={timerStart} interviewDuration={interviewInfo?.duration} />
 
             {/* Main call area */}
-            <div className="flex-1 flex items-center justify-center relative">
+            {/* <div className="flex-1 flex items-center justify-center relative">
                 <div className="flex flex-col items-center justify-center w-full h-full">
                     <div className="relative flex flex-col items-center justify-center">
                         <span className="absolute w-48 h-48 rounded-full bg-blue-700 opacity-30 animate-ping" />
@@ -513,13 +513,13 @@ const StartInterview = () => {
                         </div>
                     )}
               </div>
-              {mediaError && <div className="fixed bottom-56 right-8 text-red-500 text-sm bg-white bg-opacity-80 px-3 py-2 rounded shadow">{mediaError}</div>}
+              {mediaError && <div className="fixed bottom-56 right-8 text-red-500 text-sm bg-white bg-opacity-80 px-3 py-2 rounded shadow">{mediaError}</div>} */}
             </div>
           </div>
 
           {/* Main Content */}
-          {/* <div className="flex gap-6 px-8 pb-8 pt-2">
-            Video Section
+          <div className="flex gap-6 px-8 pb-8 pt-2">
+            {/* Video Section */}
             <div className="flex-1 flex flex-col items-center">
               <div className="relative w-full aspect-video bg-black rounded-xl overflow-hidden flex items-center justify-center">
                 <video
@@ -529,7 +529,7 @@ const StartInterview = () => {
                   muted
                   className="w-full h-full object-cover"
                 />
-                Mic status
+                {/* Mic status */}
                 <div className="absolute bottom-4 left-4 flex items-center gap-2">
                   
                         {activeUser === 2 && <SpeakingIcon size={24} color="#A3D86E" />}
@@ -590,11 +590,11 @@ const StartInterview = () => {
                 </div>
               </div>
             </div>
-          </div> */}
+          </div>
         </div>
       </div>
     </div>
-   </div>
+    // </div>
 
 
 
