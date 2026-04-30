@@ -1,7 +1,12 @@
 "use client"
 import { InterviewDataContext } from '@/context/InterviewDataContext';
 import Vapi from '@vapi-ai/web';
+<<<<<<< HEAD
+import { CircleDot, Clock, Clock10, Loader2Icon, Mic, MicOff, Phone, Timer, Video, VideoOff } from 'lucide-react';
+import SpeakingIcon from '@/components/ui/speaking-icon';
+=======
 import { Loader2Icon, Mic, Phone, ShieldCheck, Timer } from 'lucide-react';
+>>>>>>> ac594b75bfef11908a96bb3f4cbdb4fd50aef094
 import Image from 'next/image';
 import React, { useContext, useEffect, useRef, useState } from 'react'
 import TimerComponent from './_components/TimerComponent';
@@ -9,6 +14,35 @@ import { toast } from 'sonner';
 import axios from 'axios';
 import { supabase } from '@/services/supabaseClient';
 import { useParams, useRouter } from 'next/navigation';
+<<<<<<< HEAD
+import QuestionOverlayPanel from './_components/QuestionOverlayPanel';
+
+
+
+const StartInterview = () => {
+  const vapiRef = useRef(null);
+  const videoRef = useRef(null);
+  const [mediaError, setMediaError] = useState("");
+  const {interviewInfo, setInterviewInfo} = useContext(InterviewDataContext);
+  const [micEnabled, setMicEnabled] = useState(true);
+  const [camEnabled, setCamEnabled] = useState(true);
+  const streamRef = useRef(null);
+  const [activeUser, setActiveUser] = useState(0);
+  const [conversation, setConversation] = useState([]);
+  const [timerStart, setTimerStart] = useState(false);
+  const conversationRef = useRef([]);
+  const { interview_id } = useParams();
+  const router = useRouter();
+  const [loading, setLoading] = useState();
+  const mediaRecorderRef = useRef(null);
+  const recordedChunksRef = useRef([]);
+  const hasUploadedRef = useRef(false);
+  
+
+  if (!vapiRef.current) {
+    vapiRef.current = new Vapi(process.env.NEXT_PUBLIC_VAPI_KEY);
+  }
+=======
 import { useInterviewProctoring } from '@/hooks/useInterviewProctoring';
 
 
@@ -32,6 +66,7 @@ const StartInterview = () => {
     if (!vapiRef.current) {
         vapiRef.current = new Vapi(process.env.NEXT_PUBLIC_VAPI_KEY);
     }
+>>>>>>> ac594b75bfef11908a96bb3f4cbdb4fd50aef094
 
     useEffect(() => {
         interviewInfo && startCall();
@@ -304,6 +339,9 @@ const StartInterview = () => {
         // const firstJsonMatch = cleaned.match(/\{[\s\S]*?\}/);
         // const parsed = firstJsonMatch ? JSON.parse(firstJsonMatch[0]) : null;
 
+<<<<<<< HEAD
+        const parsed = JSON.parse(cleaned);  
+=======
         const proctoringSummary = {
             noFaceCount: logRef.current.noFaceCount,
             multipleFaceCount: logRef.current.multipleFaceCount,
@@ -319,6 +357,7 @@ const StartInterview = () => {
             parsed && typeof parsed === "object"
                 ? { ...parsed, proctoring: proctoringSummary }
                 : { raw: parsed, proctoring: proctoringSummary };
+>>>>>>> ac594b75bfef11908a96bb3f4cbdb4fd50aef094
 
         const {data, error} = await supabase
             .from('interview-feedback')
@@ -431,6 +470,11 @@ const StartInterview = () => {
               <CircleDot className="text-green-500" />
               <span className="font-semibold text-lg">AI Interview</span>
             </div>
+            <div className="flex items-center gap-4">
+              <Timer className="w-5 h-5 text-gray-500" />
+              <span className="font-semibold">Interview Time Left</span>
+              {/* <span className="font-mono text-lg">05:13</span> */}
+                <TimerComponent start={timerStart} interviewDuration={interviewInfo?.duration} />
 
             {/* Main call area */}
             <div className="flex-1 flex items-center justify-center relative">

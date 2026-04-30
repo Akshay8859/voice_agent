@@ -1,7 +1,12 @@
 "use client"
 import { InterviewDataContext } from '@/context/InterviewDataContext';
 import Vapi from '@vapi-ai/web';
+<<<<<<< HEAD
+import { CircleDot, Clock, Clock10, Loader2Icon, Mic, MicOff, Phone, Timer, Video, VideoOff } from 'lucide-react';
+import SpeakingIcon from '@/components/ui/speaking-icon';
+=======
 import { Loader2Icon, Mic, Phone, ShieldCheck, Timer } from 'lucide-react';
+>>>>>>> ac594b75bfef11908a96bb3f4cbdb4fd50aef094
 import Image from 'next/image';
 import React, { useContext, useEffect, useRef, useState } from 'react'
 import TimerComponent from './_components/TimerComponent';

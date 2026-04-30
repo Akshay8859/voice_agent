@@ -1,7 +1,12 @@
 "use client"
 import { InterviewDataContext } from '@/context/InterviewDataContext';
 import Vapi from '@vapi-ai/web';
+<<<<<<< HEAD
+import { CircleDot, Clock, Clock10, Loader2Icon, Mic, MicOff, Phone, Timer, Video, VideoOff } from 'lucide-react';
+import SpeakingIcon from '@/components/ui/speaking-icon';
+=======
 import { Loader2Icon, Mic, Phone, ShieldCheck, Timer } from 'lucide-react';
+>>>>>>> ac594b75bfef11908a96bb3f4cbdb4fd50aef094
 import Image from 'next/image';
 import React, { useContext, useEffect, useRef, useState } from 'react'
 import TimerComponent from './_components/TimerComponent';
@@ -304,6 +309,7 @@ const StartInterview = () => {
         // const firstJsonMatch = cleaned.match(/\{[\s\S]*?\}/);
         // const parsed = firstJsonMatch ? JSON.parse(firstJsonMatch[0]) : null;
 
+        const parsed = JSON.parse(cleaned);  
         const proctoringSummary = {
             noFaceCount: logRef.current.noFaceCount,
             multipleFaceCount: logRef.current.multipleFaceCount,
@@ -431,6 +437,11 @@ const StartInterview = () => {
               <CircleDot className="text-green-500" />
               <span className="font-semibold text-lg">AI Interview</span>
             </div>
+            <div className="flex items-center gap-4">
+              <Timer className="w-5 h-5 text-gray-500" />
+              <span className="font-semibold">Interview Time Left</span>
+              {/* <span className="font-mono text-lg">05:13</span> */}
+                <TimerComponent start={timerStart} interviewDuration={interviewInfo?.duration} />
 
             {/* Main call area */}
             <div className="flex-1 flex items-center justify-center relative">

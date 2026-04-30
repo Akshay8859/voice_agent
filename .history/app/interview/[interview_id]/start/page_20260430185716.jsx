@@ -1,7 +1,7 @@
 "use client"
 import { InterviewDataContext } from '@/context/InterviewDataContext';
 import Vapi from '@vapi-ai/web';
-import { Loader2Icon, Mic, Phone, ShieldCheck, Timer } from 'lucide-react';
+import { Loader2Icon, Mic, Phone, Timer } from 'lucide-react';
 import Image from 'next/image';
 import React, { useContext, useEffect, useRef, useState } from 'react'
 import TimerComponent from './_components/TimerComponent';
@@ -9,7 +9,6 @@ import { toast } from 'sonner';
 import axios from 'axios';
 import { supabase } from '@/services/supabaseClient';
 import { useParams, useRouter } from 'next/navigation';
-import { useInterviewProctoring } from '@/hooks/useInterviewProctoring';
 
 
 const StartInterview = () => {
@@ -24,11 +23,6 @@ const StartInterview = () => {
     const {interview_id} = useParams();
     const router = useRouter();
     const [loading, setLoading] = useState();
-    const proctoringActive = Boolean(timerStart && !mediaError);
-    const { canvasRef, logRef, status: proctoringStatus, displayCounts, resetLog } = useInterviewProctoring({
-        videoRef,
-        active: proctoringActive,
-    });
     if (!vapiRef.current) {
         vapiRef.current = new Vapi(process.env.NEXT_PUBLIC_VAPI_KEY);
     }
@@ -304,21 +298,7 @@ const StartInterview = () => {
         // const firstJsonMatch = cleaned.match(/\{[\s\S]*?\}/);
         // const parsed = firstJsonMatch ? JSON.parse(firstJsonMatch[0]) : null;
 
-        const proctoringSummary = {
-            noFaceCount: logRef.current.noFaceCount,
-            multipleFaceCount: logRef.current.multipleFaceCount,
-            cellPhoneCount: logRef.current.cellPhoneCount,
-            prohibitedObjectCount: logRef.current.prohibitedObjectCount,
-            screenshots: (logRef.current.screenshots || []).map((s) => ({
-                url: s.url,
-                type: s.type,
-                detectedAt: s.detectedAt,
-            })),
-        };
-        const feedbackWithProctoring =
-            parsed && typeof parsed === "object"
-                ? { ...parsed, proctoring: proctoringSummary }
-                : { raw: parsed, proctoring: proctoringSummary };
+        // const parsed = JSON.parse(cleaned);  
 
         const {data, error} = await supabase
             .from('interview-feedback')
@@ -431,104 +411,24 @@ const StartInterview = () => {
               <CircleDot className="text-green-500" />
               <span className="font-semibold text-lg">AI Interview</span>
             </div>
-
-            {/* Main call area */}
-            <div className="flex-1 flex items-center justify-center relative">
-                {/* Central AI avatar/animation */}
-                <div className="flex flex-col items-center justify-center w-full h-full">
-                    <div className="relative flex flex-col items-center justify-center">
-                        {/* Animated AI avatar ring */}
-                        <span className="absolute w-48 h-48 rounded-full bg-blue-700 opacity-30 animate-ping" />
-                        <span className="absolute w-32 h-32 rounded-full bg-blue-700 opacity-40 animate-pulse" />
-                        <Image src={'/ai.png'} alt='ai' width={100} height={100} className='w-[80px] h-[80px] rounded-full object-cover z-10'/>
-                    </div>
-                    <h2 className="text-white text-lg mt-4">AI Recruiter</h2>
-                </div>
-
-                {/* User video preview + COCO-SSD proctoring overlay (AI-Proctored-System style) */}
-                <div className="fixed bottom-8 right-8 w-64 rounded-lg overflow-hidden border-2 border-gray-700 bg-black shadow-lg z-20 flex flex-col">
-                    <div className="relative w-full h-40 bg-black">
-                        <video
-                            ref={videoRef}
-                            autoPlay
-                            playsInline
-                            muted
-                            className="w-full h-full object-cover"
-                        />
-                        <canvas
-                            ref={canvasRef}
-                            className="absolute inset-0 w-full h-full pointer-events-none"
-                            aria-hidden
-                        />
-                        <div className="absolute top-1 left-1 right-1 flex items-start justify-between gap-1 pointer-events-none">
-                            <span
-                                className={`text-[10px] font-medium px-1.5 py-0.5 rounded flex items-center gap-0.5 ${
-                                    proctoringActive && !proctoringStatus.error
-                                        ? "bg-emerald-600/90 text-white"
-                                        : "bg-gray-800/90 text-gray-300"
-                                }`}
-                            >
-                                <ShieldCheck className="h-3 w-3 shrink-0" />
-                                {proctoringStatus.loading
-                                    ? "Proctoring…"
-                                    : proctoringStatus.error
-                                      ? "Proctoring off"
-                                      : proctoringActive
-                                        ? "Live"
-                                        : "Ready"}
-                            </span>
-                        </div>
-                    </div>
-                    {(displayCounts.noFaceCount +
-                        displayCounts.multipleFaceCount +
-                        displayCounts.cellPhoneCount +
-                        displayCounts.prohibitedObjectCount) > 0 && (
-                        <div className="text-[10px] text-gray-300 px-2 py-1 bg-gray-900/95 border-t border-gray-800 grid grid-cols-2 gap-x-2 gap-y-0.5">
-                            {displayCounts.noFaceCount > 0 && (
-                                <span>No face: {displayCounts.noFaceCount}</span>
-                            )}
-                            {displayCounts.multipleFaceCount > 0 && (
-                                <span>Multi-face: {displayCounts.multipleFaceCount}</span>
-                            )}
-                            {displayCounts.cellPhoneCount > 0 && (
-                                <span>Phone: {displayCounts.cellPhoneCount}</span>
-                            )}
-                            {displayCounts.prohibitedObjectCount > 0 && (
-                                <span>Object: {displayCounts.prohibitedObjectCount}</span>
-                            )}
-                        </div>
-                    )}
-                </div>
-                {/* Error message for media */}
-                {mediaError && <div className="fixed bottom-56 right-8 text-red-500 text-sm bg-white bg-opacity-80 px-3 py-2 rounded shadow">{mediaError}</div>}
+            <div className="flex items-center gap-4">
+              <Timer className="w-5 h-5 text-gray-500" />
+              <span className="font-semibold">Interview Time Left</span>
+              {/* <span className="font-mono text-lg">05:13</span> */}
+                <TimerComponent start={timerStart} interviewDuration={interviewInfo?.duration} />
             </div>
           </div>
 
-          {/* Main Content */}
-          <div className="flex gap-6 px-8 pb-8 pt-2">
-            {/* Video Section */}
-            <div className="flex-1 flex flex-col items-center">
-              <div className="relative w-full aspect-video bg-black rounded-xl overflow-hidden flex items-center justify-center">
-                <video
-                  ref={videoRef}
-                  autoPlay
-                  playsInline
-                  muted
-                  className="w-full h-full object-cover"
-                />
-                {/* Mic status */}
-                <div className="absolute bottom-4 left-4 flex items-center gap-2">
-                  
-                        {activeUser === 2 && <SpeakingIcon size={24} color="#A3D86E" />}
-
-                </div>
-                {/* Rec status */}
-                <div className="absolute top-4 right-4 flex items-center gap-2">
-                  <span className="px-2 py-1 bg-red-100 text-red-600 rounded text-xs font-semibold">Rec</span>
-                </div>
-                {/* User name overlay */}
-                <div className="absolute top-4 left-4 bg-white/80 px-3 py-1 rounded text-gray-700 text-xs font-medium shadow">
-                  {interviewInfo?.userName} (You)
+                {/* User video preview floating at bottom right */}
+                <div className="fixed bottom-8 right-8 w-64 h-40 rounded-lg overflow-hidden border-2 border-gray-700 bg-black shadow-lg flex items-center justify-center z-20">
+                    <video
+                        ref={videoRef}
+                        autoPlay
+                        playsInline
+                        muted
+                        className="w-full h-full object-cover"
+                    />
+                    {/* Optionally, add mic/cam status icons here */}
                 </div>
               </div>
               {/* Video Controls */}

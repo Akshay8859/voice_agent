@@ -1,37 +1,43 @@
 "use client"
 import { InterviewDataContext } from '@/context/InterviewDataContext';
 import Vapi from '@vapi-ai/web';
-import { Loader2Icon, Mic, Phone, ShieldCheck, Timer } from 'lucide-react';
+import { CircleDot, Clock, Clock10, Loader2Icon, Mic, MicOff, Phone, Timer, Video, VideoOff } from 'lucide-react';
+import SpeakingIcon from '@/components/ui/speaking-icon';
 import Image from 'next/image';
 import React, { useContext, useEffect, useRef, useState } from 'react'
+import AlertConfirmation from './_components/AlertConfirmation';
 import TimerComponent from './_components/TimerComponent';
 import { toast } from 'sonner';
 import axios from 'axios';
 import { supabase } from '@/services/supabaseClient';
 import { useParams, useRouter } from 'next/navigation';
-import { useInterviewProctoring } from '@/hooks/useInterviewProctoring';
+import QuestionOverlayPanel from './_components/QuestionOverlayPanel';
+
 
 
 const StartInterview = () => {
-    const vapiRef = useRef(null);
-    const videoRef = useRef(null);
-    const [mediaError, setMediaError] = useState("");
-    const {interviewInfo, setInterviewInfo} = useContext(InterviewDataContext);
-    const [activeUser,setActiveUser]=useState(0);
-    const [conversation, setConversation] = useState([]);
-    const [timerStart, setTimerStart] = useState(false);
-    const conversationRef = useRef([]);
-    const {interview_id} = useParams();
-    const router = useRouter();
-    const [loading, setLoading] = useState();
-    const proctoringActive = Boolean(timerStart && !mediaError);
-    const { canvasRef, logRef, status: proctoringStatus, displayCounts, resetLog } = useInterviewProctoring({
-        videoRef,
-        active: proctoringActive,
-    });
-    if (!vapiRef.current) {
-        vapiRef.current = new Vapi(process.env.NEXT_PUBLIC_VAPI_KEY);
-    }
+  const vapiRef = useRef(null);
+  const videoRef = useRef(null);
+  const [mediaError, setMediaError] = useState("");
+  const {interviewInfo, setInterviewInfo} = useContext(InterviewDataContext);
+  const [micEnabled, setMicEnabled] = useState(true);
+  const [camEnabled, setCamEnabled] = useState(true);
+  const streamRef = useRef(null);
+  const [activeUser, setActiveUser] = useState(0);
+  const [conversation, setConversation] = useState([]);
+  const [timerStart, setTimerStart] = useState(false);
+  const conversationRef = useRef([]);
+  const { interview_id } = useParams();
+  const router = useRouter();
+  const [loading, setLoading] = useState();
+  const mediaRecorderRef = useRef(null);
+  const recordedChunksRef = useRef([]);
+  const hasUploadedRef = useRef(false);
+  
+
+  if (!vapiRef.current) {
+    vapiRef.current = new Vapi(process.env.NEXT_PUBLIC_VAPI_KEY);
+  }
 
     useEffect(() => {
         interviewInfo && startCall();
@@ -237,7 +243,6 @@ const StartInterview = () => {
         vapiRef.current.on("call-start",()=>{
             hasUploadedRef.current = false;
             conversationRef.current = [];
-            resetLog();
             setTimerStart(true);
             toast("Call Connected..");
         })
@@ -275,7 +280,7 @@ const StartInterview = () => {
             // vapiRef.current.off("speech-end", ()=>console.log("END"));
             // vapiRef.current.off("call-end", ()=>console.log("END"));
         }
-    },[resetLog]);
+    },[]);
 
     const GenerateFeedback = async () => {
         setLoading(true);
@@ -304,26 +309,12 @@ const StartInterview = () => {
         // const firstJsonMatch = cleaned.match(/\{[\s\S]*?\}/);
         // const parsed = firstJsonMatch ? JSON.parse(firstJsonMatch[0]) : null;
 
-        const proctoringSummary = {
-            noFaceCount: logRef.current.noFaceCount,
-            multipleFaceCount: logRef.current.multipleFaceCount,
-            cellPhoneCount: logRef.current.cellPhoneCount,
-            prohibitedObjectCount: logRef.current.prohibitedObjectCount,
-            screenshots: (logRef.current.screenshots || []).map((s) => ({
-                url: s.url,
-                type: s.type,
-                detectedAt: s.detectedAt,
-            })),
-        };
-        const feedbackWithProctoring =
-            parsed && typeof parsed === "object"
-                ? { ...parsed, proctoring: proctoringSummary }
-                : { raw: parsed, proctoring: proctoringSummary };
+        const parsed = JSON.parse(cleaned);  
 
         const {data, error} = await supabase
             .from('interview-feedback')
             .insert([
-                { userName: interviewInfo?.userName, userEmail: interviewInfo?.userEmail, interview_id: interview_id, feedback: feedbackWithProctoring, recommended: false }
+                { userName: interviewInfo?.userName, userEmail: interviewInfo?.userEmail, interview_id: interview_id, feedback: parsed, recommended: false }
             ])
             .select();
 
@@ -431,76 +422,11 @@ const StartInterview = () => {
               <CircleDot className="text-green-500" />
               <span className="font-semibold text-lg">AI Interview</span>
             </div>
-
-            {/* Main call area */}
-            <div className="flex-1 flex items-center justify-center relative">
-                {/* Central AI avatar/animation */}
-                <div className="flex flex-col items-center justify-center w-full h-full">
-                    <div className="relative flex flex-col items-center justify-center">
-                        {/* Animated AI avatar ring */}
-                        <span className="absolute w-48 h-48 rounded-full bg-blue-700 opacity-30 animate-ping" />
-                        <span className="absolute w-32 h-32 rounded-full bg-blue-700 opacity-40 animate-pulse" />
-                        <Image src={'/ai.png'} alt='ai' width={100} height={100} className='w-[80px] h-[80px] rounded-full object-cover z-10'/>
-                    </div>
-                    <h2 className="text-white text-lg mt-4">AI Recruiter</h2>
-                </div>
-
-                {/* User video preview + COCO-SSD proctoring overlay (AI-Proctored-System style) */}
-                <div className="fixed bottom-8 right-8 w-64 rounded-lg overflow-hidden border-2 border-gray-700 bg-black shadow-lg z-20 flex flex-col">
-                    <div className="relative w-full h-40 bg-black">
-                        <video
-                            ref={videoRef}
-                            autoPlay
-                            playsInline
-                            muted
-                            className="w-full h-full object-cover"
-                        />
-                        <canvas
-                            ref={canvasRef}
-                            className="absolute inset-0 w-full h-full pointer-events-none"
-                            aria-hidden
-                        />
-                        <div className="absolute top-1 left-1 right-1 flex items-start justify-between gap-1 pointer-events-none">
-                            <span
-                                className={`text-[10px] font-medium px-1.5 py-0.5 rounded flex items-center gap-0.5 ${
-                                    proctoringActive && !proctoringStatus.error
-                                        ? "bg-emerald-600/90 text-white"
-                                        : "bg-gray-800/90 text-gray-300"
-                                }`}
-                            >
-                                <ShieldCheck className="h-3 w-3 shrink-0" />
-                                {proctoringStatus.loading
-                                    ? "Proctoring…"
-                                    : proctoringStatus.error
-                                      ? "Proctoring off"
-                                      : proctoringActive
-                                        ? "Live"
-                                        : "Ready"}
-                            </span>
-                        </div>
-                    </div>
-                    {(displayCounts.noFaceCount +
-                        displayCounts.multipleFaceCount +
-                        displayCounts.cellPhoneCount +
-                        displayCounts.prohibitedObjectCount) > 0 && (
-                        <div className="text-[10px] text-gray-300 px-2 py-1 bg-gray-900/95 border-t border-gray-800 grid grid-cols-2 gap-x-2 gap-y-0.5">
-                            {displayCounts.noFaceCount > 0 && (
-                                <span>No face: {displayCounts.noFaceCount}</span>
-                            )}
-                            {displayCounts.multipleFaceCount > 0 && (
-                                <span>Multi-face: {displayCounts.multipleFaceCount}</span>
-                            )}
-                            {displayCounts.cellPhoneCount > 0 && (
-                                <span>Phone: {displayCounts.cellPhoneCount}</span>
-                            )}
-                            {displayCounts.prohibitedObjectCount > 0 && (
-                                <span>Object: {displayCounts.prohibitedObjectCount}</span>
-                            )}
-                        </div>
-                    )}
-                </div>
-                {/* Error message for media */}
-                {mediaError && <div className="fixed bottom-56 right-8 text-red-500 text-sm bg-white bg-opacity-80 px-3 py-2 rounded shadow">{mediaError}</div>}
+            <div className="flex items-center gap-4">
+              <Timer className="w-5 h-5 text-gray-500" />
+              <span className="font-semibold">Interview Time Left</span>
+              {/* <span className="font-mono text-lg">05:13</span> */}
+                <TimerComponent start={timerStart} interviewDuration={interviewInfo?.duration} />
             </div>
           </div>
 
