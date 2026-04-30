@@ -3,8 +3,10 @@ import Image from "next/image";
 import { supabase } from "@/services/supabaseClient";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 const Signup = () => {
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
 
   const handleSignup = async (e) => {

@@ -1,43 +1,31 @@
 "use client"
 import { InterviewDataContext } from '@/context/InterviewDataContext';
 import Vapi from '@vapi-ai/web';
-import { CircleDot, Clock, Clock10, Loader2Icon, Mic, MicOff, Phone, Timer, Video, VideoOff } from 'lucide-react';
-import SpeakingIcon from '@/components/ui/speaking-icon';
+import { Loader2Icon, Mic, Phone, Timer } from 'lucide-react';
 import Image from 'next/image';
 import React, { useContext, useEffect, useRef, useState } from 'react'
-import AlertConfirmation from './_components/AlertConfirmation';
 import TimerComponent from './_components/TimerComponent';
 import { toast } from 'sonner';
 import axios from 'axios';
 import { supabase } from '@/services/supabaseClient';
 import { useParams, useRouter } from 'next/navigation';
-import QuestionOverlayPanel from './_components/QuestionOverlayPanel';
-
 
 
 const StartInterview = () => {
-  const vapiRef = useRef(null);
-  const videoRef = useRef(null);
-  const [mediaError, setMediaError] = useState("");
-  const {interviewInfo, setInterviewInfo} = useContext(InterviewDataContext);
-  const [micEnabled, setMicEnabled] = useState(true);
-  const [camEnabled, setCamEnabled] = useState(true);
-  const streamRef = useRef(null);
-  const [activeUser, setActiveUser] = useState(0);
-  const [conversation, setConversation] = useState([]);
-  const [timerStart, setTimerStart] = useState(false);
-  const conversationRef = useRef([]);
-  const { interview_id } = useParams();
-  const router = useRouter();
-  const [loading, setLoading] = useState();
-  const mediaRecorderRef = useRef(null);
-  const recordedChunksRef = useRef([]);
-  const hasUploadedRef = useRef(false);
-  
-
-  if (!vapiRef.current) {
-    vapiRef.current = new Vapi(process.env.NEXT_PUBLIC_VAPI_KEY);
-  }
+    const vapiRef = useRef(null);
+    const videoRef = useRef(null);
+    const [mediaError, setMediaError] = useState("");
+    const {interviewInfo, setInterviewInfo} = useContext(InterviewDataContext);
+    const [activeUser,setActiveUser]=useState(0);
+    const [conversation, setConversation] = useState([]);
+    const [timerStart, setTimerStart] = useState(false);
+    const conversationRef = useRef([]);
+    const {interview_id} = useParams();
+    const router = useRouter();
+    const [loading, setLoading] = useState();
+    if (!vapiRef.current) {
+        vapiRef.current = new Vapi(process.env.NEXT_PUBLIC_VAPI_KEY);
+    }
 
     useEffect(() => {
         interviewInfo && startCall();
@@ -243,6 +231,7 @@ const StartInterview = () => {
         vapiRef.current.on("call-start",()=>{
             hasUploadedRef.current = false;
             conversationRef.current = [];
+            resetLog();
             setTimerStart(true);
             toast("Call Connected..");
         })
@@ -280,7 +269,7 @@ const StartInterview = () => {
             // vapiRef.current.off("speech-end", ()=>console.log("END"));
             // vapiRef.current.off("call-end", ()=>console.log("END"));
         }
-    },[]);
+    },[resetLog]);
 
     const GenerateFeedback = async () => {
         setLoading(true);
@@ -309,12 +298,12 @@ const StartInterview = () => {
         // const firstJsonMatch = cleaned.match(/\{[\s\S]*?\}/);
         // const parsed = firstJsonMatch ? JSON.parse(firstJsonMatch[0]) : null;
 
-        const parsed = JSON.parse(cleaned);  
+        // const parsed = JSON.parse(cleaned);  
 
         const {data, error} = await supabase
             .from('interview-feedback')
             .insert([
-                { userName: interviewInfo?.userName, userEmail: interviewInfo?.userEmail, interview_id: interview_id, feedback: parsed, recommended: false }
+                { userName: interviewInfo?.userName, userEmail: interviewInfo?.userEmail, interview_id: interview_id, feedback: feedbackWithProctoring, recommended: false }
             ])
             .select();
 
@@ -430,31 +419,16 @@ const StartInterview = () => {
             </div>
           </div>
 
-          {/* Main Content */}
-          <div className="flex gap-6 px-8 pb-8 pt-2">
-            {/* Video Section */}
-            <div className="flex-1 flex flex-col items-center">
-              <div className="relative w-full aspect-video bg-black rounded-xl overflow-hidden flex items-center justify-center">
-                <video
-                  ref={videoRef}
-                  autoPlay
-                  playsInline
-                  muted
-                  className="w-full h-full object-cover"
-                />
-                {/* Mic status */}
-                <div className="absolute bottom-4 left-4 flex items-center gap-2">
-                  
-                        {activeUser === 2 && <SpeakingIcon size={24} color="#A3D86E" />}
-
-                </div>
-                {/* Rec status */}
-                <div className="absolute top-4 right-4 flex items-center gap-2">
-                  <span className="px-2 py-1 bg-red-100 text-red-600 rounded text-xs font-semibold">Rec</span>
-                </div>
-                {/* User name overlay */}
-                <div className="absolute top-4 left-4 bg-white/80 px-3 py-1 rounded text-gray-700 text-xs font-medium shadow">
-                  {interviewInfo?.userName} (You)
+                {/* User video preview floating at bottom right */}
+                <div className="fixed bottom-8 right-8 w-64 h-40 rounded-lg overflow-hidden border-2 border-gray-700 bg-black shadow-lg flex items-center justify-center z-20">
+                    <video
+                        ref={videoRef}
+                        autoPlay
+                        playsInline
+                        muted
+                        className="w-full h-full object-cover"
+                    />
+                    {/* Optionally, add mic/cam status icons here */}
                 </div>
               </div>
               {/* Video Controls */}
