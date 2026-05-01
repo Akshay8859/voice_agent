@@ -175,6 +175,7 @@ const StartInterview = () => {
         interview_id: interview_id,
         file_path: fileName,
       });
+      
     if (uploadError || insertError) {
       toast.error("Error uploading recording.");
     } else {

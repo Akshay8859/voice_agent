@@ -173,8 +173,9 @@ const StartInterview = () => {
       .from("proctoring-recording")
       .insert({
         interview_id: interview_id,
-        file_path: fileName,
+        file_url: fileName,
       });
+
     if (uploadError || insertError) {
       toast.error("Error uploading recording.");
     } else {
