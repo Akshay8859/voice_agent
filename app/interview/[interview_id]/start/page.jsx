@@ -1,7 +1,7 @@
 "use client"
 import { InterviewDataContext } from '@/context/InterviewDataContext';
 import Vapi from '@vapi-ai/web';
-import { CircleDot, Clock, Clock10, Loader2Icon, Mic, MicOff, Phone, Timer, Video, VideoOff, ShieldCheck } from 'lucide-react';
+import { CircleDot, Loader2Icon, Mic, MicOff, Phone, Timer, Video, VideoOff, ShieldCheck } from 'lucide-react';
 import SpeakingIcon from '@/components/ui/speaking-icon';
 import Image from 'next/image';
 import React, { useContext, useEffect, useRef, useState } from 'react'
@@ -151,7 +151,11 @@ const StartInterview = () => {
       const { data, error } = await supabase.storage
         .from("proctoring-data")
         .upload(fileName, blob);
-
+      
+      await supabase.from('proctoring-recording').insert({
+        interview_id: interview_id,
+        file_url: fileName,
+      })
       if (error) {
         toast.error(error.message);
       } else {
@@ -290,32 +294,6 @@ const StartInterview = () => {
 
     const GenerateFeedback = async () => {
         setLoading(true);
-        console.log("Conversation for feedback:", conversation);
-        const result = await axios.post('/api/ai-feedback', {
-            conversation: conversationRef.current,
-        }, {
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        });
-
-        const rawContent = result.data?.content;
-        // console.log("API Response:", result.data);
-
-        if (!rawContent) {
-            throw new Error("No content returned from AI");
-        }
-
-        
-        const cleaned = rawContent
-            .replace('```json', '')
-            .replace('```', '')
-            .trim();
-
-        // const firstJsonMatch = cleaned.match(/\{[\s\S]*?\}/);
-        // const parsed = firstJsonMatch ? JSON.parse(firstJsonMatch[0]) : null;
-
-        const parsed = JSON.parse(cleaned);  
         const proctoringSummary = {
             noFaceCount: logRef.current.noFaceCount,
             multipleFaceCount: logRef.current.multipleFaceCount,
@@ -327,201 +305,96 @@ const StartInterview = () => {
                 detectedAt: s.detectedAt,
             })),
         };
-        const feedbackWithProctoring =
-            parsed && typeof parsed === "object"
-                ? { ...parsed, proctoring: proctoringSummary }
-                : { raw: parsed, proctoring: proctoringSummary };
 
-        const {data, error} = await supabase
-            .from('interview-feedback')
-            .insert([
-                { userName: interviewInfo?.userName, userEmail: interviewInfo?.userEmail, interview_id: interview_id, feedback: feedbackWithProctoring, recommended: false }
-            ])
-            .select();
+        const insertRow = async (feedbackPayload) => {
+            const { error } = await supabase.from("interview-feedback").insert([
+                {
+                    userName: interviewInfo?.userName,
+                    userEmail: interviewInfo?.userEmail,
+                    interview_id: interview_id,
+                    feedback: feedbackPayload,
+                    recommended: false,
+                },
+            ]);
+            if (error) {
+                console.error("interview-feedback insert:", error);
+                toast.error(error.message || "Could not save interview record.");
+                throw error;
+            }
+        };
 
-        router.replace('/interview/' + interview_id + '/completed');
-        setLoading(false);
-        
-        
-    }
+        try {
+            const result = await axios.post(
+                "/api/ai-feedback",
+                { conversation: conversationRef.current },
+                { headers: { "Content-Type": "application/json" } }
+            );
+            const rawContent = result.data?.content;
+            if (!rawContent) {
+                await insertRow({
+                    proctoring: proctoringSummary,
+                    aiFeedbackError: "No content returned from AI",
+                });
+            } else {
+                const cleaned = rawContent
+                    .replace(/```json/gi, "")
+                    .replace(/```/g, "")
+                    .trim();
+                let parsed = null;
+                try {
+                    const firstJsonMatch = cleaned.match(/\{[\s\S]*\}/);
+                    parsed = firstJsonMatch
+                        ? JSON.parse(firstJsonMatch[0])
+                        : JSON.parse(cleaned);
+                } catch (parseErr) {
+                    console.warn("AI feedback JSON parse failed:", parseErr);
+                    parsed = {
+                        aiFeedbackParseError: String(parseErr?.message || parseErr),
+                        aiFeedbackRawSnippet: cleaned.slice(0, 4000),
+                    };
+                }
+                const feedbackWithProctoring =
+                    parsed && typeof parsed === "object" && !Array.isArray(parsed)
+                        ? { ...parsed, proctoring: proctoringSummary }
+                        : { raw: parsed, proctoring: proctoringSummary };
+                await insertRow(feedbackWithProctoring);
+            }
+        } catch (e) {
+            console.error("GenerateFeedback:", e);
+            toast.error(e?.response?.data?.error || e?.message || "Feedback request failed.");
+            try {
+                await insertRow({
+                    proctoring: proctoringSummary,
+                    aiFeedbackError: e?.message || String(e),
+                });
+            } catch {
+                /* insertRow already toasts */
+            }
+        } finally {
+            router.replace("/interview/" + interview_id + "/completed");
+            setLoading(false);
+        }
+    };
   return (
-    // <div className="relative h-[90.5vh] bg-[#23272f] flex flex-col justify-between pb-5">
-    //         {/* Top bar with timer */}
-    //         <div className="flex justify-between items-center px-8 py-4">
-    //             <div />
-    //             <div className="flex gap-2 items-center text-white text-lg font-semibold">
-    //                 <Timer />
-    //                 <TimerComponent start={timerStart} />
-    //             </div>
-    //         </div>
 
-    //         {/* Main call area */}
-    //         <div className="flex-1 flex items-center justify-center relative">
-    //             {/* Central AI avatar/animation */}
-    //             <div className="flex flex-col items-center justify-center w-full h-full">
-    //                 <div className="relative flex flex-col items-center justify-center">
-    //                     {/* Animated AI avatar ring */}
-    //                     {activeUser == 1 && <span className="absolute w-48 h-48 rounded-full bg-blue-700 opacity-30 animate-ping" />}
-                        
-    //                     {/* <span className="absolute w-32 h-32 rounded-full bg-blue-700 opacity-40 animate-pulse" /> */}
-    //                     <Image src={'/ai.png'} alt='ai' width={100} height={100} className='w-[80px] h-[80px] rounded-full object-cover z-10'/>
-    //                 </div>
-    //                 <h2 className="text-white text-lg mt-4">AI Recruiter</h2>
-    //             </div>
-
-    //             {/* User video preview floating at bottom right */}
-    //             <div className="fixed bottom-8 right-8 w-64 h-40 rounded-lg overflow-hidden border-2 border-gray-700 bg-black shadow-lg flex items-center justify-center z-20">
-    //                 <video
-    //                     ref={videoRef}
-    //                     autoPlay
-    //                     playsInline
-    //                     muted
-    //                     className="w-full h-full object-cover"
-    //                 />
-    //                 {/* Mic/Cam status icons overlay */}
-    //                 <div className="absolute top-2 right-2 flex gap-2 z-30">
-    //                     <span title={micEnabled ? 'Microphone On' : 'Microphone Off'}>
-    //                         {micEnabled ? (
-    //                             <Mic className="w-5 h-5 text-green-500" />
-    //                         ) : (
-    //                             <MicOff className="w-5 h-5 text-red-500" />
-    //                         )}
-    //                     </span>
-    //                     <span title={camEnabled ? 'Camera On' : 'Camera Off'}>
-    //                         {camEnabled ? (
-    //                             <Video className="w-5 h-5 text-green-500" />
-    //                         ) : (
-    //                             <VideoOff className="w-5 h-5 text-red-500" />
-    //                         )}
-    //                     </span>
-    //                 </div>
-    //             </div>
-    //             {/* Error message for media */}
-    //             {mediaError && <div className="fixed bottom-56 right-8 text-red-500 text-sm bg-white bg-opacity-80 px-3 py-2 rounded shadow">{mediaError}</div>}
-    //         </div>
-
-    //         {/* Control bar at the bottom */}
-    //         <div className="w-full flex items-center justify-center gap-6 py-3 bg-[#23272f] border-t border-gray-800">
-    //             <button
-    //                 className={`h-12 w-12 flex items-center justify-center rounded-full ${micEnabled ? 'bg-gray-700' : 'bg-red-700'} text-white hover:bg-gray-600 transition`}
-    //                 onClick={handleToggleMic}
-    //                 title={micEnabled ? 'Mute Microphone' : 'Unmute Microphone'}
-    //             >
-    //                 {micEnabled ? <Mic className="h-7 w-7" /> : <MicOff className="h-7 w-7" />}
-    //             </button>
-    //             <button
-    //                 className={`h-12 w-12 flex items-center justify-center rounded-full ${camEnabled ? 'bg-gray-700' : 'bg-red-700'} text-white hover:bg-gray-600 transition`}
-    //                 onClick={handleToggleCam}
-    //                 title={camEnabled ? 'Turn Off Camera' : 'Turn On Camera'}
-    //             >
-    //                 {camEnabled ? <Video className="h-7 w-7" /> : <VideoOff className="h-7 w-7" />}
-    //             </button>
-    //             {!loading ? (
-    //                 <button className="h-12 w-12 flex items-center justify-center rounded-full bg-red-600 text-white hover:bg-red-700 transition" onClick={() => stopInterview()}>
-    //                     <Phone className="h-7 w-7" />
-    //                 </button>
-    //             ) : (
-    //                 <Loader2Icon className="animate-spin h-7 w-7 text-white" />
-    //             )}
-    //         </div>
-    //         <h2 className='text-center text-sm text-gray-400 mt-1 animate-pulse'>Interview in Progress...</h2>
-    //     </div>
-
-
-
-
-
-
-    <div className="h-[90vh] bg-[#f6f7fa] flex flex-col">
-
-      {/* Main Card */}
-      <div className="flex-1 flex items-center justify-center py-8 px-2">
-        <div className="bg-white rounded-2xl shadow-xl w-full max-w-6xl flex flex-col p-0">
-          {/* Interview Title & Status */}
-          <div className="flex items-center justify-between px-8 pt-6 pb-2">
+    <div className="min-h-[90vh] bg-[#f6f7fa] flex flex-col">
+      <div className="flex-1 flex items-center justify-center py-6 px-2">
+        <div className="bg-white rounded-2xl shadow-xl w-full max-w-6xl flex flex-col overflow-hidden">
+          <div className="flex flex-wrap items-center justify-between gap-3 px-6 sm:px-8 pt-5 pb-3 border-b border-gray-100">
             <div className="flex items-center gap-2">
-              <CircleDot className="text-green-500" />
+              <CircleDot className="text-green-500 shrink-0" />
               <span className="font-semibold text-lg">AI Interview</span>
             </div>
-            <div className="flex items-center gap-4">
-              <Timer className="w-5 h-5 text-gray-500" />
-              <span className="font-semibold">Interview Time Left</span>
-              {/* <span className="font-mono text-lg">05:13</span> */}
-                <TimerComponent start={timerStart} interviewDuration={interviewInfo?.duration} />
-
-            {/* Main call area */}
-            <div className="flex-1 flex items-center justify-center relative">
-                <div className="flex flex-col items-center justify-center w-full h-full">
-                    <div className="relative flex flex-col items-center justify-center">
-                        <span className="absolute w-48 h-48 rounded-full bg-blue-700 opacity-30 animate-ping" />
-                        <span className="absolute w-32 h-32 rounded-full bg-blue-700 opacity-40 animate-pulse" />
-                        <Image src={'/ai.png'} alt='ai' width={100} height={100} className='w-[80px] h-[80px] rounded-full object-cover z-10'/>
-                    </div>
-                    <h2 className="text-white text-lg mt-4">AI Recruiter</h2>
-                </div>
-
-                <div className="fixed bottom-8 right-8 w-64 rounded-lg overflow-hidden border-2 border-gray-700 bg-black shadow-lg z-20 flex flex-col">
-                    <div className="relative w-full h-40 bg-black">
-                        <video
-                            ref={videoRef}
-                            autoPlay
-                            playsInline
-                            muted
-                            className="w-full h-full object-cover"
-                        />
-                        <canvas
-                            ref={canvasRef}
-                            className="absolute inset-0 w-full h-full pointer-events-none"
-                            aria-hidden
-                        />
-                        <div className="absolute top-1 left-1 right-1 flex items-start justify-between gap-1 pointer-events-none">
-                            <span
-                                className={`text-[10px] font-medium px-1.5 py-0.5 rounded flex items-center gap-0.5 ${
-                                    proctoringActive && !proctoringStatus.error
-                                        ? "bg-emerald-600/90 text-white"
-                                        : "bg-gray-800/90 text-gray-300"
-                                }`}
-                            >
-                                <ShieldCheck className="h-3 w-3 shrink-0" />
-                                {proctoringStatus.loading
-                                    ? "Proctoring…"
-                                    : proctoringStatus.error
-                                      ? "Proctoring off"
-                                      : proctoringActive
-                                        ? "Live"
-                                        : "Ready"}
-                            </span>
-                        </div>
-                    </div>
-                    {(displayCounts.noFaceCount +
-                        displayCounts.multipleFaceCount +
-                        displayCounts.cellPhoneCount +
-                        displayCounts.prohibitedObjectCount) > 0 && (
-                        <div className="text-[10px] text-gray-300 px-2 py-1 bg-gray-900/95 border-t border-gray-800 grid grid-cols-2 gap-x-2 gap-y-0.5">
-                            {displayCounts.noFaceCount > 0 && (
-                                <span>No face: {displayCounts.noFaceCount}</span>
-                            )}
-                            {displayCounts.multipleFaceCount > 0 && (
-                                <span>Multi-face: {displayCounts.multipleFaceCount}</span>
-                            )}
-                            {displayCounts.cellPhoneCount > 0 && (
-                                <span>Phone: {displayCounts.cellPhoneCount}</span>
-                            )}
-                            {displayCounts.prohibitedObjectCount > 0 && (
-                                <span>Object: {displayCounts.prohibitedObjectCount}</span>
-                            )}
-                        </div>
-                    )}
-              </div>
-              {mediaError && <div className="fixed bottom-56 right-8 text-red-500 text-sm bg-white bg-opacity-80 px-3 py-2 rounded shadow">{mediaError}</div>}
+            <div className="flex items-center gap-2 sm:gap-3 text-gray-600 text-sm">
+              <Timer className="w-5 h-5 shrink-0" />
+              <span className="font-medium hidden sm:inline">Elapsed</span>
+              <TimerComponent start={timerStart} />
             </div>
           </div>
 
-          {/* Main Content */}
-          {/* <div className="flex gap-6 px-8 pb-8 pt-2">
-            Video Section
-            <div className="flex-1 flex flex-col items-center">
-              <div className="relative w-full aspect-video bg-black rounded-xl overflow-hidden flex items-center justify-center">
+          <div className="flex flex-col lg:flex-row gap-6 px-6 sm:px-8 pb-8 pt-4">
+            <div className="flex-1 flex flex-col items-center min-w-0">
+              <div className="relative w-full aspect-video bg-black rounded-xl overflow-hidden flex items-center justify-center shadow-inner">
                 <video
                   ref={videoRef}
                   autoPlay
@@ -529,127 +402,136 @@ const StartInterview = () => {
                   muted
                   className="w-full h-full object-cover"
                 />
-                Mic status
-                <div className="absolute bottom-4 left-4 flex items-center gap-2">
-                  
-                        {activeUser === 2 && <SpeakingIcon size={24} color="#A3D86E" />}
-
+                <canvas
+                  ref={canvasRef}
+                  className="absolute inset-0 w-full h-full pointer-events-none"
+                  aria-hidden
+                />
+                <div className="absolute bottom-4 left-4 flex items-center gap-2 z-10">
+                  {activeUser === 2 && <SpeakingIcon size={24} color="#A3D86E" />}
                 </div>
-                Rec status
-                <div className="absolute top-4 right-4 flex items-center gap-2">
-                  <span className="px-2 py-1 bg-red-100 text-red-600 rounded text-xs font-semibold">Rec</span>
-                </div>
-                User name overlay
-                <div className="absolute top-4 left-4 bg-white/80 px-3 py-1 rounded text-gray-700 text-xs font-medium shadow">
+                {timerStart && (
+                  <div className="absolute top-4 right-4 flex items-center gap-2 z-10">
+                    <span className="px-2 py-1 bg-red-100 text-red-600 rounded text-xs font-semibold animate-pulse">
+                      Rec
+                    </span>
+                  </div>
+                )}
+                <div className="absolute top-4 left-4 bg-white/90 px-3 py-1 rounded text-gray-700 text-xs font-medium shadow z-10 max-w-[70%] truncate">
                   {interviewInfo?.userName} (You)
                 </div>
+                <div className="absolute bottom-3 right-3 z-10 pointer-events-none flex flex-col items-end gap-1">
+                  <span
+                    className={`text-[10px] font-medium px-1.5 py-0.5 rounded flex items-center gap-0.5 ${
+                      proctoringActive && !proctoringStatus.error
+                        ? "bg-emerald-600/90 text-white"
+                        : "bg-black/60 text-gray-200"
+                    }`}
+                  >
+                    <ShieldCheck className="h-3 w-3 shrink-0" />
+                    {proctoringStatus.loading
+                      ? "Proctoring…"
+                      : proctoringStatus.error
+                        ? "Off"
+                        : proctoringActive
+                          ? "Live"
+                          : "Ready"}
+                  </span>
+                </div>
               </div>
-              Video Controls
+              {(displayCounts.noFaceCount +
+                displayCounts.multipleFaceCount +
+                displayCounts.cellPhoneCount +
+                displayCounts.prohibitedObjectCount) > 0 && (
+                <div className="w-full mt-2 text-[11px] text-gray-600 px-2 py-1.5 bg-amber-50 border border-amber-100 rounded-lg grid grid-cols-2 sm:grid-cols-4 gap-1">
+                  {displayCounts.noFaceCount > 0 && <span>No face: {displayCounts.noFaceCount}</span>}
+                  {displayCounts.multipleFaceCount > 0 && (
+                    <span>Multi-face: {displayCounts.multipleFaceCount}</span>
+                  )}
+                  {displayCounts.cellPhoneCount > 0 && <span>Phone: {displayCounts.cellPhoneCount}</span>}
+                  {displayCounts.prohibitedObjectCount > 0 && (
+                    <span>Object: {displayCounts.prohibitedObjectCount}</span>
+                  )}
+                </div>
+              )}
+              {mediaError && (
+                <p className="w-full mt-2 text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
+                  {mediaError}
+                </p>
+              )}
               <div className="flex items-center justify-center gap-6 mt-6">
                 <button
-                  className={`h-12 w-12 flex items-center justify-center rounded-full ${micEnabled ? 'bg-gray-100' : 'bg-red-100'} text-gray-700 hover:bg-gray-200 transition`}
+                  type="button"
+                  className={`h-12 w-12 flex items-center justify-center rounded-full ${
+                    micEnabled ? "bg-gray-100" : "bg-red-100"
+                  } text-gray-700 hover:bg-gray-200 transition`}
                   onClick={handleToggleMic}
-                  title={micEnabled ? 'Mute Microphone' : 'Unmute Microphone'}
+                  title={micEnabled ? "Mute Microphone" : "Unmute Microphone"}
                 >
                   {micEnabled ? <Mic className="h-7 w-7" /> : <MicOff className="h-7 w-7" />}
                 </button>
                 <button
-                  className={`h-12 w-12 flex items-center justify-center rounded-full ${camEnabled ? 'bg-gray-100' : 'bg-red-100'} text-gray-700 hover:bg-gray-200 transition`}
+                  type="button"
+                  className={`h-12 w-12 flex items-center justify-center rounded-full ${
+                    camEnabled ? "bg-gray-100" : "bg-red-100"
+                  } text-gray-700 hover:bg-gray-200 transition`}
                   onClick={handleToggleCam}
-                  title={camEnabled ? 'Turn Off Camera' : 'Turn On Camera'}
+                  title={camEnabled ? "Turn Off Camera" : "Turn On Camera"}
                 >
                   {camEnabled ? <Video className="h-7 w-7" /> : <VideoOff className="h-7 w-7" />}
                 </button>
                 {!loading ? (
-                  <button className="h-12 w-12 flex items-center justify-center rounded-full bg-red-600 text-white hover:bg-red-700 transition" onClick={() => stopInterview()} >
+                  <button
+                    type="button"
+                    className="h-12 w-12 flex items-center justify-center rounded-full bg-red-600 text-white hover:bg-red-700 transition"
+                    onClick={() => stopInterview()}
+                  >
                     <Phone className="h-7 w-7" />
                   </button>
                 ) : (
                   <Loader2Icon className="animate-spin h-7 w-7 text-gray-700" />
                 )}
               </div>
+              <p className="text-center text-xs text-gray-400 mt-3 animate-pulse">Interview in Progress...</p>
             </div>
-            Question Panel
-            <div className="w-[340px] flex flex-col gap-4">
+
+            <div className="w-full lg:w-[340px] shrink-0 flex flex-col gap-4">
               <QuestionOverlayPanel interviewInfo={interviewInfo} />
               <div className="bg-white rounded-xl p-5 shadow flex flex-col items-center gap-2">
-                <span className="font-semibold text-gray-700">
-                  {activeUser === 2 ? 'AI Interviewer' : activeUser === 1 ? `${interviewInfo?.userName} (You)` : 'AI Interviewer'}
+                <span className="font-semibold text-gray-700 text-center">
+                  {activeUser === 1
+                    ? "AI Interviewer"
+                    : activeUser === 2
+                      ? `${interviewInfo?.userName ?? "You"} (You)`
+                      : "AI Interviewer"}
                 </span>
-                <div className='flex bottom-3 left-3'>
+                <div className="flex justify-center min-h-[28px]">
                   {activeUser === 1 && <SpeakingIcon size={25} color="#A3D86E" />}
                 </div>
-                <div className="grid grid-cols-1 items-center mt-2">
-                  
-                  <Image src={'/ai.png'} alt='ai' width={100} height={100} className='w-[80px] h-[80px] rounded-full object-cover z-10'/>
-                  <span className="text-green-700 font-medium">
-                    {activeUser === 1 && 'AI is speaking...'}
-                    {activeUser === 2 && 'You are speaking...'}
-                    {activeUser === 0 && 'Waiting...'}
+                <div className="grid grid-cols-1 items-center justify-items-center mt-2 gap-2">
+                  <Image
+                    src="/ai.png"
+                    alt="AI interviewer"
+                    width={100}
+                    height={100}
+                    className="w-[80px] h-[80px] rounded-full object-cover"
+                  />
+                  <span className="text-green-700 font-medium text-sm text-center">
+                    {activeUser === 1 && "AI is speaking..."}
+                    {activeUser === 2 && "You are speaking..."}
+                    {activeUser === 0 && "Waiting..."}
                   </span>
                 </div>
               </div>
             </div>
-          </div> */}
+          </div>
         </div>
       </div>
     </div>
-   </div>
 
 
 
 
-
-
-
-
-
-
-
-
-
-
-    // <div className='p-20 lg:px-48 xl:px-56'>
-    //     <h2 className='font-bold text-xl flex justify-between'>AI Interview Session
-    //         <span className='flex gap-2 items-center'>
-    //             <Timer />   
-    //             <TimerComponent start={timerStart} />
-    //         </span>
-    //     </h2>
-    //     <div className='grid grid-cols-1 md:grid-cols-2 gap-7 mt-5'>
-    //         <div className='bg-gray-100 h-[400px] rounded-lg border flex flex-col gap-3 items-center justify-center'>
-    //             <div className='relative items-center justify-center flex flex-col'>
-    //                 {activeUser == 1 && <span className='absolute inset-0 rounded-full bg-primary opacity-75 animate-ping' />}
-    //                 <Image src={'/ai.png'} alt='ai' width={100} height={100} className='w-[60px] h-[60px] rounded-full object-cover'/>
-    //                 <h2>AI Recruiter</h2>
-    //             </div>
-    //         </div>
-    //         <div className='bg-gray-100 h-[400px] rounded-lg border flex flex-col gap-3 items-center justify-center'>   
-    //             <div className='relative items-center justify-center flex flex-col'>
-    //                 {/* {activeUser == 2 && <span className='absolute inset-0 rounded-full bg-primary opacity-75 animate-ping' />} */}
-    //                 {/* <div className="w-full h-full overflow-hidden "> */}
-    //                     <video
-    //                         ref={videoRef}
-    //                         autoPlay
-    //                         playsInline
-    //                         muted
-    //                         className="w-full h-full rounded-lg flex items-center justify-center object-center"
-    //                     />
-    //                 {/* </div> */}
-    //             </div>
-    //             {/* <h2>{interviewInfo?.userName}</h2> */}
-    //             {/* {mediaError && <div className="text-red-500 text-sm mt-2">{mediaError}</div>} */}
-    //         </div>
-    //     </div>
-
-    //     <div className='flex items-center justify-center gap-5 mt-7'>
-    //         <Mic className='h-12 w-12 p-3 bg-gray-500 text-white rounded-full cursor-pointer' />
-    //         {/* <AlertConfirmation stopInterview={() => stopInterview()}> */}
-    //             {!loading ? <Phone className='h-12 w-12 p-3 bg-red-500 text-white rounded-full cursor-pointer' onClick={() => stopInterview()} /> : <Loader2Icon className='animate-spin' />}
-    //         {/* </AlertConfirmation> */}
-    //     </div>
-    //     <h2 className='text-center text-sm text-gray-400 mt-5 animate-pulse'>Interview in Progress...</h2>
-    // </div>
   )
 }
 
