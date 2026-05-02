@@ -37,8 +37,10 @@ import Image from "next/image";
 import { supabase } from "@/services/supabaseClient";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 const Login = () => {
+  const router = useRouter();
   const [email,setEmail]=useState("")
   const [password,setPassword]=useState("")
 
